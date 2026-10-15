@@ -7,6 +7,7 @@ resource "aws_key_pair" "deployer" {
   public_key = file("${var.private_key_path}.pub") # or path to your public key
 }
 
+# 
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -18,6 +19,7 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
+# Allow SSH traffic security group
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow SSH inbound traffic"
@@ -42,6 +44,7 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
+# Allow HTTP traffic security group
 resource "aws_security_group" "allow_http" {
   name        = "allow_http"
   description = "Allow HTTP inbound traffic"
@@ -66,6 +69,7 @@ resource "aws_security_group" "allow_http" {
   }
 }
 
+# Creates the app_server EC2 instance
 resource "aws_instance" "app_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
@@ -79,7 +83,7 @@ resource "aws_instance" "app_server" {
 }
 
 resource "null_resource" "ansible_provisioner" {
-  # Trigger re-execution if the EC2 instance ID changes
+  # Trigger re-execution if the EC2 instance ID or playbook changes
   triggers = {
     ec2_id = aws_instance.app_server.id
     playbook_hash = filemd5("${path.module}/install_docker.yml")
